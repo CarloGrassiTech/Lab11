@@ -9,6 +9,7 @@ class Controller:
         self._model = model
         self._listYear = [2015,2016,2017,2018]
         self._listColor = self._model.agetAllColor()
+        self._ddNode = None
 
     def fillDD(self):
         for a in self._listYear:
@@ -27,23 +28,30 @@ class Controller:
             for i in self.findMostWeightedEdges():
                 self._view.txtOut.controls.append(ft.Text(f"arco tra {i[0]} a {i[1]} con peso {i[2]}"))
             self._view.update_page()
+            self.fillDDProduct()
 
     def findMostWeightedEdges(self):
-
-        temp = list(self._model._edges[0:3])
-        print(temp)
-        for i in self._model._edges[3:]:
-            if temp[0][2] < i[2]:
-                temp[0][2] = i[2]
-            elif temp[1][2] < i[2]:
-                temp[1][2] = i[2]
-            elif temp[2][2] < i[2]:
-                temp[2][2] = i[2]
+        temp = self._model._edges[0:3]
+        temp.sort(key = lambda x: int(x[2]), reverse=True)
         print(temp)
         return temp
     def fillDDProduct(self):
-        pass
-
+        if self._model._graph.nodes() != None:
+            for i in self._model._graph.nodes():
+                self._view._ddnode.options.append(ft.dropdown.Option(key=str(i), data=i))
+        self._view.update_page()
 
     def handle_search(self, e):
-        pass
+        if self._view._ddnode.value != None:
+            self._ddNode = self._view._ddnode.value
+        parziale = list()
+        parziale.append(self._ddNode)
+        nodi_rim = self._model._nodes
+        nodi_rim.remove(self._ddNode)
+        self.ricorsione(parziale, nodi_rim)
+
+
+    def ricorsione(self, parziale, nodi_rim, costo):
+        if len(nodi_rim) ==0:
+            self._costo
+        else:

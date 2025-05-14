@@ -14,7 +14,7 @@ class Model:
 
 
     def buildGraph(self):
-        self._nodes = DAO.getAllNodes(self._colore, self._anno)
+        self._nodes = DAO.getAllNodes(self._colore)
         for n in self._nodes:
             self._idMap[n.Product_number] = n
         self._graph.add_nodes_from(self._nodes)

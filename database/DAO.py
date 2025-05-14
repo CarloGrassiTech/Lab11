@@ -4,17 +4,17 @@ from model.product import Product
 class DAO():
 
     @staticmethod
-    def getAllNodes( colore, anno):
+    def getAllNodes( colore):
         conn = DBConnect.get_connection()
         cursor = conn.cursor(dictionary=True)
 
         result = []
-        query = """select p.Product_number, p.Product_line, p.Product_type, p.Product, p.Product_brand, p.Product_color, p.Unit_cost, p.Unit_price
+        query = """select distinct p.Product_number, p.Product_line, p.Product_type, p.Product, p.Product_brand, p.Product_color, p.Unit_cost, p.Unit_price
                     from go_products p, go_daily_sales s
-                    where p.Product_number = s.Product_number and p.Product_color = %s and Year(s.Date) = %s
+                    where p.Product_number = s.Product_number and p.Product_color = %s 
                     """
 
-        cursor.execute(query, (colore,anno))
+        cursor.execute(query, (colore,))
 
         for row in cursor:
             result.append(Product(**row))
@@ -52,20 +52,29 @@ class DAO():
         cursor = conn.cursor(dictionary=True)
 
         result = []
-        query = """select distinct p1.Product_number, p2.Product_number, count(*) as weight
-                from (select  p.Product_number, s.Date, s.Retailer_code
-                from go_products p, go_daily_sales s
-                where p.Product_number = s.Product_number and p.Product_color = %s and YEAR(s.Date) = %s ) p1, (select  p.Product_number, s.Date, s.Retailer_code
-                from go_products p, go_daily_sales s
-                where  p.Product_number = s.Product_number and p.Product_color = %s and YEAR(s.Date) = %s ) p2
-                where p1.Date = p2.Date and p1.Retailer_code = p2.Retailer_code and p1.Product_number < p2.Product_number
-                group by p1.Retailer_code 
-                    """
+        query = """SELECT f1.Product_number AS Product1, f2.Product_number AS Product2, COUNT(DISTINCT f1.Date) AS weight
+        FROM (
+        SELECT gs.Retailer_code, gp.Product_number, gs.Date
+        FROM go_products gp
+        JOIN go_daily_sales gs ON gp.Product_number = gs.Product_number
+        WHERE gp.Product_color = %s AND YEAR(gs.Date) = %s
+        ) AS f1
+        JOIN (
+        SELECT gs.Retailer_code, gp.Product_number, gs.Date
+        FROM go_products gp
+        JOIN go_daily_sales gs ON gp.Product_number = gs.Product_number
+        WHERE gp.Product_color = %s AND YEAR(gs.Date) = %s
+        ) AS f2
+        ON f1.Retailer_code = f2.Retailer_code
+        AND f1.Date = f2.Date
+        AND f1.Product_number != f2.Product_number
+        GROUP BY f1.Product_number, f2.Product_number
+        HAVING COUNT(DISTINCT f1.Date) > 1"""
 
         cursor.execute(query, (colore, anno, colore, anno))
 
         for row in cursor:
-            result.append((row["Product_number"], row["Product_number"], row["weight"]))
+            result.append((row["Product1"], row["Product2"], row["weight"]))
             # result.append(ArtObject(object_id = row["object_id"], ...))
 
 
